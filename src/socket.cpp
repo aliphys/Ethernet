@@ -22,10 +22,12 @@
 #include "Ethernet.h"
 #include "utility/w5100.h"
 
-#if ARDUINO >= 156 && !defined(ARDUINO_ARCH_PIC32)
+#if ARDUINO >= 156 && !defined(ARDUINO_ARCH_PIC32) && !defined(ARDUINO_CI)
 extern void yield(void);
 #else
+#ifndef yield
 #define yield()
+#endif
 #endif
 
 // TODO: randomize this when not using DHCP, but how?
