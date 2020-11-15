@@ -1,5 +1,8 @@
 = Ethernet Library for Arduino =
 
+![Linux Build Status](https://github.com/Arduino-CI/Ethernet/workflows/ubuntu/badge.svg) ![macOS Build Status](https://github.com/Arduino-CI/Ethernet/workflows/macos/badge.svg) ![Windows Build Status](https://github.com/Arduino-CI/Ethernet/workflows/windows/badge.svg) 
+
+
 With the Arduino Ethernet Shield, this library allows an Arduino board to connect to the internet.
 
 For more information about this library please visit us at
