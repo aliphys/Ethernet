@@ -22,7 +22,7 @@
 #include "Ethernet.h"
 #include "utility/w5100.h"
 
-#if ARDUINO >= 156 && !defined(ARDUINO_ARCH_PIC32) && !defined(ARDUINO_CI)
+#if ARDUINO >= 156 && !defined(ARDUINO_ARCH_PIC32) && !defined(MOCK_PINS_COUNT)
 extern void yield(void);
 #else
 #ifndef yield

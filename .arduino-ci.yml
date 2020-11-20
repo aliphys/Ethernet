@@ -1,33 +1,7 @@
-platforms:
-
-  uno:
-    board: arduino:avr:uno
-    package: arduino:avr
-    gcc:
-      features:
-      defines:
-        - __AVR_ATmega328P__
-        - ARDUINO=10813
-        - ARDUINO_CI
-      warnings:
-      flags:
-  due:
-    board: arduino:sam:arduino_due_x
-    package: arduino:sam
-    gcc:
-      features:
-      defines:
-        - __AVR_ATmega328__
-        - ARDUINO=10813
-        - ARDUINO_CI
-      warnings:
-      flags:
 
 unittest:
   platforms:
-    - uno
-    - due
+    - mega2560
 compile:
   platforms:
-    - uno
-    - due
+    - mega2560
