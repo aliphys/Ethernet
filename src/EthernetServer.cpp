@@ -22,10 +22,10 @@
 #include "Ethernet.h"
 #include "utility/w5100.h"
 
-uint16_t EthernetServer::server_port[MAX_SOCK_NUM];
+uint16_t EthernetServer_Base::server_port[MAX_SOCK_NUM];
 
 
-void EthernetServer::begin()
+void EthernetServer_Base::begin()
 {
 	uint8_t sockindex = Ethernet.socketBegin(SnMR::TCP, _port);
 	if (sockindex < MAX_SOCK_NUM) {
@@ -37,14 +37,14 @@ void EthernetServer::begin()
 	}
 }
 
-EthernetClient EthernetServer::available()
+EthernetClient_Base EthernetServer_Base::available()
 {
 	bool listening = false;
 	uint8_t sockindex = MAX_SOCK_NUM;
 	uint8_t chip, maxindex=MAX_SOCK_NUM;
 
 	chip = W5100.getChip();
-	if (!chip) return EthernetClient(MAX_SOCK_NUM);
+	if (!chip) return EthernetClient_Base(MAX_SOCK_NUM);
 #if MAX_SOCK_NUM > 4
 	if (chip == 51) maxindex = 4; // W5100 chip never supports more than 4 sockets
 #endif
@@ -69,17 +69,17 @@ EthernetClient EthernetServer::available()
 		}
 	}
 	if (!listening) begin();
-	return EthernetClient(sockindex);
+	return EthernetClient_Base(sockindex);
 }
 
-EthernetClient EthernetServer::accept()
+EthernetClient_Base EthernetServer_Base::accept()
 {
 	bool listening = false;
 	uint8_t sockindex = MAX_SOCK_NUM;
 	uint8_t chip, maxindex=MAX_SOCK_NUM;
 
 	chip = W5100.getChip();
-	if (!chip) return EthernetClient(MAX_SOCK_NUM);
+	if (!chip) return EthernetClient_Base(MAX_SOCK_NUM);
 #if MAX_SOCK_NUM > 4
 	if (chip == 51) maxindex = 4; // W5100 chip never supports more than 4 sockets
 #endif
@@ -101,10 +101,10 @@ EthernetClient EthernetServer::accept()
 		}
 	}
 	if (!listening) begin();
-	return EthernetClient(sockindex);
+	return EthernetClient_Base(sockindex);
 }
 
-EthernetServer::operator bool()
+EthernetServer_Base::operator bool()
 {
 	uint8_t maxindex=MAX_SOCK_NUM;
 #if MAX_SOCK_NUM > 4
@@ -121,9 +121,9 @@ EthernetServer::operator bool()
 }
 
 #if 0
-void EthernetServer::statusreport()
+void EthernetServer_Base::statusreport()
 {
-	Serial.printf("EthernetServer, port=%d\n", _port);
+	Serial.printf("EthernetServer_Base, port=%d\n", _port);
 	for (uint8_t i=0; i < MAX_SOCK_NUM; i++) {
 		uint16_t port = server_port[i];
 		uint8_t stat = Ethernet.socketStatus(i);
@@ -153,12 +153,12 @@ void EthernetServer::statusreport()
 }
 #endif
 
-size_t EthernetServer::write(uint8_t b)
+size_t EthernetServer_Base::write(uint8_t b)
 {
 	return write(&b, 1);
 }
 
-size_t EthernetServer::write(const uint8_t *buffer, size_t size)
+size_t EthernetServer_Base::write(const uint8_t *buffer, size_t size)
 {
 	uint8_t chip, maxindex=MAX_SOCK_NUM;
 

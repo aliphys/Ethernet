@@ -23,7 +23,7 @@
 #include "Dns.h"
 #include "utility/w5100.h"
 
-int EthernetClient::connect(const char * host, uint16_t port)
+int EthernetClient_Base::connect(const char * host, uint16_t port)
 {
 	DNSClient dns; // Look up the host first
 	IPAddress remote_addr;
@@ -39,7 +39,7 @@ int EthernetClient::connect(const char * host, uint16_t port)
 	return connect(remote_addr, port);
 }
 
-int EthernetClient::connect(IPAddress ip, uint16_t port)
+int EthernetClient_Base::connect(IPAddress ip, uint16_t port)
 {
 	if (sockindex < MAX_SOCK_NUM) {
 		if (Ethernet.socketStatus(sockindex) != SnSR::CLOSED) {
@@ -69,18 +69,18 @@ int EthernetClient::connect(IPAddress ip, uint16_t port)
 	return 0;
 }
 
-int EthernetClient::availableForWrite(void)
+int EthernetClient_Base::availableForWrite(void)
 {
 	if (sockindex >= MAX_SOCK_NUM) return 0;
 	return Ethernet.socketSendAvailable(sockindex);
 }
 
-size_t EthernetClient::write(uint8_t b)
+size_t EthernetClient_Base::write(uint8_t b)
 {
 	return write(&b, 1);
 }
 
-size_t EthernetClient::write(const uint8_t *buf, size_t size)
+size_t EthernetClient_Base::write(const uint8_t *buf, size_t size)
 {
 	if (sockindex >= MAX_SOCK_NUM) return 0;
 	if (Ethernet.socketSend(sockindex, buf, size)) return size;
@@ -88,7 +88,7 @@ size_t EthernetClient::write(const uint8_t *buf, size_t size)
 	return 0;
 }
 
-int EthernetClient::available()
+int EthernetClient_Base::available()
 {
 	if (sockindex >= MAX_SOCK_NUM) return 0;
 	return Ethernet.socketRecvAvailable(sockindex);
@@ -100,27 +100,27 @@ int EthernetClient::available()
 	// command to cause the Wiznet chip to resend the ACK packet.
 }
 
-int EthernetClient::read(uint8_t *buf, size_t size)
+int EthernetClient_Base::read(uint8_t *buf, size_t size)
 {
 	if (sockindex >= MAX_SOCK_NUM) return 0;
 	return Ethernet.socketRecv(sockindex, buf, size);
 }
 
-int EthernetClient::peek()
+int EthernetClient_Base::peek()
 {
 	if (sockindex >= MAX_SOCK_NUM) return -1;
 	if (!available()) return -1;
 	return Ethernet.socketPeek(sockindex);
 }
 
-int EthernetClient::read()
+int EthernetClient_Base::read()
 {
 	uint8_t b;
 	if (Ethernet.socketRecv(sockindex, &b, 1) > 0) return b;
 	return -1;
 }
 
-void EthernetClient::flush()
+void EthernetClient_Base::flush()
 {
 	while (sockindex < MAX_SOCK_NUM) {
 		uint8_t stat = Ethernet.socketStatus(sockindex);
@@ -129,7 +129,7 @@ void EthernetClient::flush()
 	}
 }
 
-void EthernetClient::stop()
+void EthernetClient_Base::stop()
 {
 	if (sockindex >= MAX_SOCK_NUM) return;
 
@@ -151,7 +151,7 @@ void EthernetClient::stop()
 	sockindex = MAX_SOCK_NUM;
 }
 
-uint8_t EthernetClient::connected()
+uint8_t EthernetClient_Base::connected()
 {
 	if (sockindex >= MAX_SOCK_NUM) return 0;
 
@@ -160,7 +160,7 @@ uint8_t EthernetClient::connected()
 		(s == SnSR::CLOSE_WAIT && !available()));
 }
 
-uint8_t EthernetClient::status()
+uint8_t EthernetClient_Base::status()
 {
 	if (sockindex >= MAX_SOCK_NUM) return SnSR::CLOSED;
 	return Ethernet.socketStatus(sockindex);
@@ -168,7 +168,7 @@ uint8_t EthernetClient::status()
 
 // the next function allows us to use the client returned by
 // EthernetServer::available() as the condition in an if-statement.
-bool EthernetClient::operator==(const EthernetClient& rhs)
+bool EthernetClient_Base::operator==(const EthernetClient_Base& rhs)
 {
 	if (sockindex != rhs.sockindex) return false;
 	if (sockindex >= MAX_SOCK_NUM) return false;
@@ -178,7 +178,7 @@ bool EthernetClient::operator==(const EthernetClient& rhs)
 
 // https://github.com/per1234/EthernetMod
 // from: https://github.com/ntruchsess/Arduino-1/commit/937bce1a0bb2567f6d03b15df79525569377dabd
-uint16_t EthernetClient::localPort()
+uint16_t EthernetClient_Base::localPort()
 {
 	if (sockindex >= MAX_SOCK_NUM) return 0;
 	uint16_t port;
@@ -190,7 +190,7 @@ uint16_t EthernetClient::localPort()
 
 // https://github.com/per1234/EthernetMod
 // returns the remote IP address: http://forum.arduino.cc/index.php?topic=82416.0
-IPAddress EthernetClient::remoteIP()
+IPAddress EthernetClient_Base::remoteIP()
 {
 	if (sockindex >= MAX_SOCK_NUM) return IPAddress((uint32_t)0);
 	uint8_t remoteIParray[4];
@@ -202,7 +202,7 @@ IPAddress EthernetClient::remoteIP()
 
 // https://github.com/per1234/EthernetMod
 // from: https://github.com/ntruchsess/Arduino-1/commit/ca37de4ba4ecbdb941f14ac1fe7dd40f3008af75
-uint16_t EthernetClient::remotePort()
+uint16_t EthernetClient_Base::remotePort()
 {
 	if (sockindex >= MAX_SOCK_NUM) return 0;
 	uint16_t port;
