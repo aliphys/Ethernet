@@ -1,7 +1,7 @@
 #pragma once
 // Needed for workaround for problem in Arduino.CI
-#include <IPAddress.h>
 #include <Ethernet.h>
+#include <IPAddress.h>
 #ifdef MOCK_PINS_COUNT
 
 // Configure the maximum number of sockets to support.  W5100 chips can have
@@ -17,36 +17,38 @@
 #include "Client.h"
 #include "Server.h"
 #include "Udp.h"
-#include <w5100.h>
 #include <Arduino.h>
-#include <vector>
 #include <deque>
+#include <vector>
+#include <w5100.h>
 
 // Possible return codes from ProcessResponse
 // Originally defined in dns.cpp (Why not in header file?)
-#define SUCCESS          1
-#define TIMED_OUT        -1
-#define INVALID_SERVER   -2
-#define TRUNCATED        -3
+#define SUCCESS 1
+#define TIMED_OUT -1
+#define INVALID_SERVER -2
+#define TRUNCATED -3
 #define INVALID_RESPONSE -4
 
+#define HOSTNAME_SIZE 64
 struct mockServer {
+  char hostname[HOSTNAME_SIZE];
   IPAddress ip;
   uint16_t port;
 };
 
 class EthernetClient_CI : public EthernetClient_Base {
 public:
-  EthernetClient_CI() : sockindex(MAX_SOCK_NUM), _timeout(1000) { }
-  EthernetClient_CI(uint8_t s) : sockindex(s), _timeout(1000) { }
+  EthernetClient_CI() : sockindex(MAX_SOCK_NUM), _timeout(1000) {}
+  EthernetClient_CI(uint8_t s) : sockindex(s), _timeout(1000) {}
 
   uint8_t status() { return _status; }
   virtual int connect(IPAddress ip, uint16_t port);
-  virtual int connect(const char *host, uint16_t port) { return INVALID_SERVER; }
+  virtual int connect(const char *host, uint16_t port);
   virtual int availableForWrite(void) { return 1024 * 1024; } // returns 1mb
   virtual size_t write(uint8_t);
   virtual size_t write(const uint8_t *buf, size_t size);
-  virtual int available() { return _writeBuffer.size(); };
+  virtual int available() { return _readBuffer.size(); };
   virtual int read();
   virtual int read(uint8_t *buf, size_t size);
   virtual int peek();
@@ -56,9 +58,12 @@ public:
   virtual operator bool() { return connected(); }
   virtual bool operator==(const bool value) { return bool() == value; }
   virtual bool operator!=(const bool value) { return bool() != value; }
-  virtual bool operator==(const EthernetClient& rhs) { return _localPort == rhs.localPort(); }
-  virtual bool operator!=(const EthernetClient& rhs)
-     { return !this->operator==(rhs); }
+  virtual bool operator==(const EthernetClient &rhs) {
+    return _localPort == rhs.localPort();
+  }
+  virtual bool operator!=(const EthernetClient &rhs) {
+    return !this->operator==(rhs);
+  }
   virtual uint16_t localPort() const { return _localPort; };
 
   virtual IPAddress remoteIP() const { return peer.ip; }
@@ -72,10 +77,11 @@ public:
 
   // Testing Support
   static void startMockServer(IPAddress ip, uint16_t port);
+  static void startMockServer(const char *host, uint16_t port);
   static void stopMockServer(IPAddress ip, uint16_t port);
+  static void stopMockServer(const char *host, uint16_t port);
   void pushToReadBuffer(uint8_t value) { _readBuffer.push_back(value); }
-  std::deque<uint8_t> writeBuffer() {return _writeBuffer;}
-
+  std::deque<uint8_t> writeBuffer() { return _writeBuffer; }
 
 private:
   uint8_t sockindex; // MAX_SOCK_NUM means client not in use

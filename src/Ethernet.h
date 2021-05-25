@@ -121,10 +121,10 @@ public:
   friend class EthernetServer;
   friend class EthernetUDP;
 
-  #ifdef MOCK_PINS_COUNT
+#ifdef MOCK_PINS_COUNT
   friend class EthernetServer_Base;
   friend class EthernetClient_Base;
-  #endif
+#endif
 
 private:
   // Opens a socket(TCP or UDP or IP_RAW mode)
