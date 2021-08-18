@@ -65,6 +65,8 @@ unittest(Server_Constructor) {
   // Testing port
   EthernetServer ethernet_server(72);
   assertEqual(72, ethernet_server.getPort());
+  EthernetServer* pServer = EthernetServer::getServerForPort(72);
+  assertEqual(&ethernet_server, pServer);
 }
 
 unittest(Server_Begin) {

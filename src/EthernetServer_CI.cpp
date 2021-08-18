@@ -4,6 +4,13 @@
 #ifdef MOCK_PINS_COUNT
 #include "utility/w5100.h"
 
+std::vector<EthernetServer_CI*> EthernetServer_CI::servers;
+
+EthernetServer_CI::EthernetServer_CI(uint16_t port) : EthernetServer_Base(port) {
+	_port = port;
+	servers.push_back(this);
+}
+
 void EthernetServer_CI::begin()
 {
 	// EthernetServer_Base::begin();
@@ -40,6 +47,19 @@ uint8_t EthernetServer_CI::getSocketNumber() const {
 		}
 	}
 	return MAX_SOCK_NUM;
+}
+
+EthernetServer_CI* EthernetServer_CI::getServerForPort(uint16_t port) {
+	for (auto each : servers) {
+		if (each->getPort() == port) {
+			return each;
+		}
+	}
+	return nullptr;
+}
+
+void EthernetServer_CI::setNextClient(EthernetClient_CI nextClient) {
+	this->nextClient = nextClient;
 }
 
 #endif

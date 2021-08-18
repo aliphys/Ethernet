@@ -164,9 +164,10 @@ private:
   uint16_t _port;
   bool _didCallBegin = false;
   uint8_t getSocketNumber() const;
+  static std::vector<EthernetServer_CI*> servers;
 
 public:
-  EthernetServer_CI(uint16_t port) : EthernetServer_Base(port) { _port = port; }
+  EthernetServer_CI(uint16_t port);
   EthernetClient_CI available();
   EthernetClient_CI accept();
   virtual void begin();
@@ -176,6 +177,7 @@ public:
   // Testing Functions
   bool didCallBegin() { return _didCallBegin; }
   uint16_t getPort() { return _port; }
+  static EthernetServer_CI* getServerForPort(uint16_t port);
 };
 
 #endif
