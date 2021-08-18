@@ -9,4 +9,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - uses: Arduino-CI/action@stable-1.x
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 2.6
+      - name: Automated tests
+        run: scripts/testAndBuild.sh

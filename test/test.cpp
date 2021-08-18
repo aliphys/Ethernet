@@ -9,7 +9,7 @@ bundle exec arduino_ci_remote.rb --skip-compilation
 
 #include "Arduino.h"
 #include "ArduinoUnitTests.h"
-#include "Ethernet_CI.h"
+#include "Ethernet.h"
 #include "ci/ObservableDataStream.h"
 #include "utility/w5100.h"
 
@@ -23,8 +23,7 @@ unittest_teardown() {
   EthernetClient::stopMockServer(serverName, 80);
 }
 
-// Test the Ethernet.begin() behaves the same as it did in the simulators
-unittest(EthernetBegin) {
+unittest(Ethernet_begin_pins) {
   // Setup
   GodmodeState *state = GODMODE();
   state->reset();
@@ -45,6 +44,21 @@ unittest(EthernetBegin) {
     }
   }
   assertTrue(passed);
+}
+
+unittest(Ethernet_begin_DHCP) {
+  // Setup
+  GodmodeState *state = GODMODE();
+  state->reset();
+  uint8_t mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
+  int flag = Ethernet.begin(mac);
+  assertEqual(0, flag);  // DHCP failure
+  assertEqual(0, Ethernet.localIP());
+
+  Ethernet.mockDHCP(IPAddress(192, 168, 1, 42));
+  flag = Ethernet.begin(mac);
+  assertEqual(1, flag);  // DHCP success
+  assertEqual(IPAddress(192, 168, 1, 42), Ethernet.localIP());
 }
 
 unittest(Server_Constructor) {

@@ -51,9 +51,11 @@
 
 ////////// TESTING //////////
 #ifdef MOCK_PINS_COUNT
+#define Ethernet_CI EthernetClass
 #define EthernetClient_CI EthernetClient
 #define EthernetServer_CI EthernetServer
 #else
+#define Ethernet_Base EthernetClass
 #define EthernetClient_Base EthernetClient
 #define EthernetServer_Base EthernetServer
 #endif
@@ -77,7 +79,7 @@ class EthernetClient;
 class EthernetServer;
 class DhcpClass;
 
-class EthernetClass {
+class Ethernet_Base {
 private:
   static IPAddress _dnsServerAddress;
   static DhcpClass *_dhcp;
@@ -117,16 +119,11 @@ public:
   void setRetransmissionTimeout(uint16_t milliseconds);
   void setRetransmissionCount(uint8_t num);
 
-  friend class EthernetClient;
-  friend class EthernetServer;
-  friend class EthernetUDP;
-
-#ifdef MOCK_PINS_COUNT
   friend class EthernetServer_Base;
   friend class EthernetClient_Base;
-#endif
+  friend class EthernetUDP;
 
-private:
+protected:
   // Opens a socket(TCP or UDP or IP_RAW mode)
   static uint8_t socketBegin(uint8_t protocol, uint16_t port);
   static uint8_t socketBeginMulticast(uint8_t protocol, IPAddress ip,
@@ -164,8 +161,6 @@ private:
   // Initialize the "random" source port number
   static void socketPortRand(uint16_t n);
 };
-
-extern EthernetClass Ethernet;
 
 #define UDP_TX_PACKET_MAX_SIZE 24
 
@@ -347,5 +342,11 @@ public:
                     unsigned long responseTimeout = 4000);
   int checkLease();
 };
+
+#ifdef MOCK_PINS_COUNT
+#include "Ethernet_CI.h"
+#endif
+
+extern EthernetClass Ethernet;
 
 #endif

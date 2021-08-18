@@ -16,3 +16,4 @@ vendor
 *.bin
 *.bin.dSYM
 .DS_Store
+.vscode

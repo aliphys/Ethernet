@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "Ethernet_CI.h"
+#include "Ethernet.h"
 
 #ifdef MOCK_PINS_COUNT
 #include "utility/w5100.h"

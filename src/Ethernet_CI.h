@@ -1,7 +1,4 @@
 #pragma once
-// Needed for workaround for problem in Arduino.CI
-#include <Ethernet.h>
-#include <IPAddress.h>
 #ifdef MOCK_PINS_COUNT
 
 // Configure the maximum number of sockets to support.  W5100 chips can have
@@ -35,6 +32,74 @@ struct mockServer {
   char hostname[HOSTNAME_SIZE];
   IPAddress ip;
   uint16_t port;
+};
+
+class Ethernet_CI : public Ethernet_Base {
+private:
+  static IPAddress _mockDHCP;
+
+public:
+  // Initialise the Ethernet shield to use the provided MAC address and
+  // gain the rest of the configuration through DHCP.
+  // Returns 0 if the DHCP configuration failed, and 1 if it succeeded
+  static int begin(uint8_t *mac, unsigned long timeout = 60000,
+                   unsigned long responseTimeout = 4000);
+  static int maintain();
+  static EthernetLinkStatus linkStatus();
+  static EthernetHardwareStatus hardwareStatus();
+
+  // Manaul configuration
+  static void begin(uint8_t *mac, IPAddress ip);
+  static void begin(uint8_t *mac, IPAddress ip, IPAddress dns);
+  static void begin(uint8_t *mac, IPAddress ip, IPAddress dns,
+                    IPAddress gateway);
+  static void begin(uint8_t *mac, IPAddress ip, IPAddress dns,
+                    IPAddress gateway, IPAddress subnet);
+  static void init(uint8_t sspin = 10);
+
+  static void MACAddress(uint8_t *mac_address);
+  static IPAddress localIP();
+  static IPAddress subnetMask();
+  static IPAddress gatewayIP();
+  static IPAddress dnsServerIP();
+
+  void setMACAddress(const uint8_t *mac_address);
+  void setLocalIP(const IPAddress local_ip);
+  void setSubnetMask(const IPAddress subnet);
+  void setGatewayIP(const IPAddress gateway);
+  void setDnsServerIP(const IPAddress dns_server);
+  void setRetransmissionTimeout(uint16_t milliseconds);
+  void setRetransmissionCount(uint8_t num);
+
+  // testing
+  void mockDHCP(IPAddress ip);
+
+protected:
+  static uint8_t socketBegin(uint8_t protocol, uint16_t port);
+  static uint8_t socketBeginMulticast(uint8_t protocol, IPAddress ip,
+                                      uint16_t port);
+  static uint8_t socketStatus(uint8_t s);
+  static void socketClose(uint8_t s);
+  static void socketConnect(uint8_t s, uint8_t *addr, uint16_t port);
+  static void socketDisconnect(uint8_t s);
+  static uint8_t socketListen(uint8_t s);
+  static uint16_t socketSend(uint8_t s, const uint8_t *buf, uint16_t len);
+  static uint16_t socketSendAvailable(uint8_t s);
+  static int socketRecv(uint8_t s, uint8_t *buf, int16_t len);
+  static uint16_t socketRecvAvailable(uint8_t s);
+  static uint8_t socketPeek(uint8_t s);
+  static bool socketStartUDP(uint8_t s, uint8_t *addr, uint16_t port);
+  static uint16_t socketBufferData(uint8_t s, uint16_t offset,
+                                   const uint8_t *buf, uint16_t len);
+  static bool socketSendUDP(uint8_t s);
+
+public:
+  static void socketPortRand(uint16_t n);
+
+  friend class EthernetClient_Base;
+  friend class EthernetServer_Base;
+  friend class EthernetUDP;
+
 };
 
 class EthernetClient_CI : public EthernetClient_Base {

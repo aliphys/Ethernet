@@ -1,4 +1,4 @@
-#include "Ethernet_CI.h"
+#include "Ethernet.h"
 #include <Arduino.h>
 
 #ifdef MOCK_PINS_COUNT
