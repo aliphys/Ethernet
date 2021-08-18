@@ -65,8 +65,6 @@ unittest(Server_Constructor) {
   // Testing port
   EthernetServer ethernet_server(72);
   assertEqual(72, ethernet_server.getPort());
-  EthernetServer* pServer = EthernetServer::getServerForPort(72);
-  assertEqual(&ethernet_server, pServer);
 }
 
 unittest(Server_Begin) {
@@ -178,6 +176,19 @@ unittest(Client_Connected) {
   EthernetClient::startMockServer(serverIP, 80);
   int result = client.connect(serverIP, 80);
   assertTrue(client.connected());
+}
+
+unittest(Client_Server) {
+  EthernetServer ethernet_server(80);
+  EthernetClient_CI client1 = ethernet_server.accept();
+  assertFalse(client1);
+
+  EthernetServer* pServer = EthernetServer::getServerForPort(80);
+  assertNotNull(pServer);
+  assertEqual(&ethernet_server, pServer);
+  pServer->setHasClientCalling(true);
+  EthernetClient_CI client2 = ethernet_server.accept();
+  assertTrue(client2);
 }
 
 unittest_main()

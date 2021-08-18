@@ -4,11 +4,15 @@
 #ifdef MOCK_PINS_COUNT
 #include "utility/w5100.h"
 
-std::vector<EthernetServer_CI*> EthernetServer_CI::servers;
+std::set<EthernetServer_CI*> EthernetServer_CI::servers;
 
 EthernetServer_CI::EthernetServer_CI(uint16_t port) : EthernetServer_Base(port) {
 	_port = port;
-	servers.push_back(this);
+	servers.emplace(this);
+}
+
+EthernetServer_CI::~EthernetServer_CI() {
+	servers.erase(this);
 }
 
 void EthernetServer_CI::begin()
@@ -19,14 +23,22 @@ void EthernetServer_CI::begin()
 
 EthernetClient_CI EthernetServer_CI::available()
 {
-	EthernetClient_Base client = EthernetServer_Base::available();
-	return EthernetClient_CI(client.getSocketNumber());
+	if (hasClientCalling) {
+		EthernetClient_Base client = EthernetServer_Base::available();
+		return EthernetClient_CI(client.getSocketNumber());
+	} else {
+		return EthernetClient_CI();
+	}
 }
 
 EthernetClient_CI EthernetServer_CI::accept()
 {
-	EthernetClient_Base client = EthernetServer_Base::accept();
-	return EthernetClient_CI(client.getSocketNumber());
+	if (hasClientCalling) {
+		EthernetClient_Base client = EthernetServer_Base::accept();
+		return EthernetClient_CI(client.getSocketNumber());
+	} else {
+		return EthernetClient_CI();
+	}
 }
 
 size_t EthernetServer_CI::write(const uint8_t *buffer, size_t size)
@@ -56,10 +68,6 @@ EthernetServer_CI* EthernetServer_CI::getServerForPort(uint16_t port) {
 		}
 	}
 	return nullptr;
-}
-
-void EthernetServer_CI::setNextClient(EthernetClient_CI nextClient) {
-	this->nextClient = nextClient;
 }
 
 #endif

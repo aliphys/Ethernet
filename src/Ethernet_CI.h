@@ -16,6 +16,7 @@
 #include "Udp.h"
 #include <Arduino.h>
 #include <deque>
+#include <set>
 #include <vector>
 #include <w5100.h>
 
@@ -99,13 +100,12 @@ public:
   friend class EthernetClient_Base;
   friend class EthernetServer_Base;
   friend class EthernetUDP;
-
 };
 
 class EthernetClient_CI : public EthernetClient_Base {
 public:
   EthernetClient_CI() : sockindex(MAX_SOCK_NUM), _timeout(1000) {}
-  EthernetClient_CI(uint8_t s) : sockindex(s), _timeout(1000) {}
+  EthernetClient_CI(uint8_t s) : sockindex(s), _timeout(1000), _status(SnSR::ESTABLISHED) {}
 
   uint8_t status() { return _status; }
   virtual int connect(IPAddress ip, uint16_t port);
@@ -147,6 +147,7 @@ public:
   static void stopMockServer(const char *host, uint16_t port);
   void pushToReadBuffer(uint8_t value) { _readBuffer.push_back(value); }
   std::deque<uint8_t> writeBuffer() { return _writeBuffer; }
+  void setStatus(uint8_t status) { _status = status; }
 
 private:
   uint8_t sockindex; // MAX_SOCK_NUM means client not in use
@@ -164,10 +165,13 @@ private:
   uint16_t _port;
   bool _didCallBegin = false;
   uint8_t getSocketNumber() const;
-  static std::vector<EthernetServer_CI*> servers;
+  static std::set<EthernetServer_CI *> servers;
+  bool hasClientCalling = false;
+  EthernetClient_CI *client = nullptr;
 
 public:
   EthernetServer_CI(uint16_t port);
+  ~EthernetServer_CI();
   EthernetClient_CI available();
   EthernetClient_CI accept();
   virtual void begin();
@@ -177,7 +181,9 @@ public:
   // Testing Functions
   bool didCallBegin() { return _didCallBegin; }
   uint16_t getPort() { return _port; }
-  static EthernetServer_CI* getServerForPort(uint16_t port);
+  static EthernetServer_CI *getServerForPort(uint16_t port);
+  void setHasClientCalling(bool flag) { hasClientCalling = flag; }
+  EthernetClient_CI *getClient() { return client; }
 };
 
 #endif
