@@ -123,7 +123,7 @@ public:
   friend class EthernetClient_Base;
   friend class EthernetUDP;
 
-protected:
+private:
   // Opens a socket(TCP or UDP or IP_RAW mode)
   static uint8_t socketBegin(uint8_t protocol, uint16_t port);
   static uint8_t socketBeginMulticast(uint8_t protocol, IPAddress ip,

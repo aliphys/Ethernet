@@ -111,10 +111,11 @@ unittest(Client_Write) {
   EthernetClient client;
   EthernetClient::startMockServer(serverIP, 80);
   int result = client.connect(serverIP, 80);
-  assertEqual(0, client.writeBuffer().size());
+  assertEqual(0, client.writeBuffer()->size());
   client.write((const uint8_t *)"Hello", 5);
-  assertEqual(5, client.writeBuffer().size());
-  assertEqual('H', client.writeBuffer().at(0));
+  assertEqual(5, client.writeBuffer()->size());
+  assertEqual('H', client.writeBuffer()->at(0));
+  client.stop();
 }
 
 unittest(Client_Read) {
@@ -128,6 +129,7 @@ unittest(Client_Read) {
   assertEqual(1, client.available());
   assertEqual('A', client.read());
   assertEqual(0, client.available());
+  client.stop();
 }
 
 unittest(Client_Stop) {
@@ -138,7 +140,7 @@ unittest(Client_Stop) {
   client.stop();
 
   assertEqual(-1, client.read());
-  assertEqual(0, client.writeBuffer().size());
+  assertNull(client.writeBuffer());
 
   assertEqual(0, client.localPort());
 
@@ -180,15 +182,18 @@ unittest(Client_Connected) {
 
 unittest(Client_Server) {
   EthernetServer ethernet_server(80);
-  EthernetClient_CI client1 = ethernet_server.accept();
+  EthernetClient_CI client1, client2;
+  client1 = ethernet_server.accept();
   assertFalse(client1);
 
   EthernetServer* pServer = EthernetServer::getServerForPort(80);
   assertNotNull(pServer);
   assertEqual(&ethernet_server, pServer);
   pServer->setHasClientCalling(true);
-  EthernetClient_CI client2 = ethernet_server.accept();
-  assertTrue(client2);
+  client1 = ethernet_server.accept();
+  assertTrue(client1);
+  client2 = ethernet_server.getClient();
+  assertTrue(client1 == (const EthernetClient) client2);
 }
 
 unittest_main()

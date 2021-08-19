@@ -17,39 +17,31 @@ EthernetServer_CI::~EthernetServer_CI() {
 
 void EthernetServer_CI::begin()
 {
-	// EthernetServer_Base::begin();
 	_didCallBegin = true;
 }
 
 EthernetClient_CI EthernetServer_CI::available()
 {
-	if (hasClientCalling) {
-		EthernetClient_Base client = EthernetServer_Base::available();
-		return EthernetClient_CI(client.getSocketNumber());
-	} else {
-		return EthernetClient_CI();
-	}
+	return accept();
 }
 
 EthernetClient_CI EthernetServer_CI::accept()
 {
 	if (hasClientCalling) {
-		EthernetClient_Base client = EthernetServer_Base::accept();
-		return EthernetClient_CI(client.getSocketNumber());
+		client = EthernetClient_CI(MAX_SOCK_NUM);  // signal to select your own sockindex and "connect"
 	} else {
-		return EthernetClient_CI();
+		client = EthernetClient_CI();
 	}
+	return client;
 }
 
 size_t EthernetServer_CI::write(const uint8_t *buffer, size_t size)
 {
 	EthernetClient_CI client = EthernetClient_CI(getSocketNumber());
-
-	// Is this necessary?
-	if (!client) {
+	if (!client) {  // test if client is connected
 		return 0;
 	}
-	return client.write(buffer,size);
+	return client.write(buffer, size);
 }
 
 uint8_t EthernetServer_CI::getSocketNumber() const {

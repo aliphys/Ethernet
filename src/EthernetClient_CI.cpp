@@ -6,49 +6,74 @@
 #include "utility/w5100.h"
 
 std::vector<mockServer> EthernetClient_CI::mockServers;
-uint16_t EthernetClient_CI::nextPort = 49152; // 49152 to 65535
+socket_t EthernetClient_CI::_sockets[MAX_SOCK_NUM];
+
+EthernetClient_CI::EthernetClient_CI() : sockindex(MAX_SOCK_NUM), _timeout(1000) {}
+
+EthernetClient_CI::EthernetClient_CI(uint8_t s) : sockindex(s), _timeout(1000) {
+  if (s == MAX_SOCK_NUM) {
+    for (int i = 0; i < MAX_SOCK_NUM; ++i) {
+      if (_sockets[i].status == SnSR::CLOSED) {
+        sockindex = i;
+        _status = SnSR::ESTABLISHED;
+        break;
+      }
+    }
+  }
+}
 
 size_t EthernetClient_CI::write(uint8_t b) { return write(&b, 1); }
 
 size_t EthernetClient_CI::write(const uint8_t *buf, size_t size) {
-  for (int i = 0; i < size; ++i) {
-    _writeBuffer.push_back(buf[i]);
+  if (sockindex < MAX_SOCK_NUM) {
+    for (int i = 0; i < size; ++i) {
+      _sockets[sockindex].writeBuffer.push_back(buf[i]);
+    }
+    return size;
   }
-  return size;
+  return 0;
 }
 
 int EthernetClient_CI::read(uint8_t *buf, size_t bufSize) {
-  int size = max(min(bufSize, _readBuffer.size()), 0);
+  int size = max(min(bufSize, sockindex < MAX_SOCK_NUM ? _sockets[sockindex].readBuffer.size() : 0), 0);
 
   for (int i = 0; i < size; ++i) {
-    buf[i] = _readBuffer.front();
-    _readBuffer.pop_front();
+    buf[i] = _sockets[sockindex].readBuffer.front();
+    _sockets[sockindex].readBuffer.pop_front();
   }
   return size;
 }
 
 int EthernetClient_CI::read() {
-  if (!_readBuffer.empty()) {
-    char x = _readBuffer.front();
-    _readBuffer.pop_front();
+  if (sockindex >= MAX_SOCK_NUM || _sockets[sockindex].status != SnSR::ESTABLISHED) {
+    return -1;
+  }
+  if (!_sockets[sockindex].readBuffer.empty()) {
+    char x = _sockets[sockindex].readBuffer.front();
+    _sockets[sockindex].readBuffer.pop_front();
     return x;
   }
   return -1;
 }
 
 int EthernetClient_CI::peek() {
-  if (!_readBuffer.empty()) {
-    char x = _readBuffer.front();
+  if (sockindex >= MAX_SOCK_NUM || _sockets[sockindex].status != SnSR::ESTABLISHED) {
+    return -1;
+  }
+  if (!_sockets[sockindex].readBuffer.empty()) {
+    char x = _sockets[sockindex].readBuffer.front();
     return x;
   }
   return -1;
 }
 
 void EthernetClient_CI::stop() {
-
-  // Clear read and write buffers
-  _readBuffer.clear();
-  _writeBuffer.clear();
+  if (sockindex < MAX_SOCK_NUM) {
+    _sockets[sockindex].readBuffer.clear();
+    _sockets[sockindex].writeBuffer.clear();
+    _sockets[sockindex].status = SnSR::CLOSED;
+    sockindex = MAX_SOCK_NUM;
+  }
 
   // Set port and ip to zero
   _localPort = 0;
@@ -62,10 +87,21 @@ void EthernetClient_CI::stop() {
 }
 
 int EthernetClient_CI::connect(IPAddress ip, uint16_t port) {
-  if (++nextPort < 49152) {
-    nextPort = 49152;
+  if (sockindex < MAX_SOCK_NUM) {
+    if (_sockets[sockindex].status != SnSR::CLOSED) {
+      return INVALID_SERVER;  // we are already connected!
+    }
+  } else {
+    for (int i = 0; i < MAX_SOCK_NUM; ++i) {
+      if (_sockets[i].status == SnSR::CLOSED) {
+        sockindex = i;
+        break;
+      }
+    }
   }
-  _localPort = nextPort;
+  if (sockindex >= MAX_SOCK_NUM) {
+    return INVALID_SERVER;  // unable to obtain a socket!
+  }
   // Iterate though vector of mock servers
   for (int i = 0; i < mockServers.size(); ++i) {
     // If we find server with ip and port
@@ -75,6 +111,8 @@ int EthernetClient_CI::connect(IPAddress ip, uint16_t port) {
       peer.ip = ip;
       peer.port = port;
       _status = SnSR::ESTABLISHED;
+      _sockets[sockindex].status = SnSR::ESTABLISHED;
+      _localPort = 0xC000 + sockindex;
       return SUCCESS;
     }
   }
@@ -82,10 +120,21 @@ int EthernetClient_CI::connect(IPAddress ip, uint16_t port) {
 }
 
 int EthernetClient_CI::connect(const char *hostname, uint16_t port) {
-  if (++nextPort < 49152) {
-    nextPort = 49152;
+  if (sockindex < MAX_SOCK_NUM) {
+    if (_sockets[sockindex].status != SnSR::CLOSED) {
+      return INVALID_SERVER;  // we are already connected!
+    }
+  } else {
+    for (int i = 0; i < MAX_SOCK_NUM; ++i) {
+      if (_sockets[i].status == SnSR::CLOSED) {
+        sockindex = i;
+        break;
+      }
+    }
   }
-  _localPort = nextPort;
+  if (sockindex >= MAX_SOCK_NUM) {
+    return INVALID_SERVER;  // unable to obtain a socket!
+  }
   // Iterate though vector of mock servers
   for (int i = 0; i < mockServers.size(); ++i) {
     // If we find server with ip and port
@@ -96,6 +145,8 @@ int EthernetClient_CI::connect(const char *hostname, uint16_t port) {
       peer.ip = {0, 0, 0, 0};
       peer.port = port;
       _status = SnSR::ESTABLISHED;
+      _sockets[sockindex].status = SnSR::ESTABLISHED;
+      _localPort = 0xC000 + sockindex;
       return SUCCESS;
     }
   }
