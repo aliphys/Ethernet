@@ -23,6 +23,7 @@ struct mockServer {
   char hostname[HOSTNAME_SIZE];
   IPAddress ip;
   uint16_t port;
+  const uint8_t *data = nullptr;
 };
 struct socket_t {
   uint8_t status = SnSR::CLOSED;
@@ -130,11 +131,10 @@ public:
   using Print::write;
 
   // Testing Support
-  static void startMockServer(IPAddress ip, uint16_t port);
-  static void startMockServer(const char *host, uint16_t port);
-  static void stopMockServer(IPAddress ip, uint16_t port);
-  static void stopMockServer(const char *host, uint16_t port);
-  virtual std::vector<mockServer> testServers() { return mockServers; }
+  virtual int connect(const char *host, IPAddress ip, uint16_t port);
+  static void startMockServer(const char *host, IPAddress ip, uint16_t port, const uint8_t *data = nullptr);
+  static void stopMockServer(const char *host, IPAddress ip, uint16_t port);
+  static void clearMockServers() { mockServers.clear(); }
   virtual mockServer serverPeer() { return peer; }
   void pushToReadBuffer(uint8_t value);
   std::deque<uint8_t>* writeBuffer();

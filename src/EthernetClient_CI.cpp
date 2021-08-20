@@ -84,7 +84,8 @@ void EthernetClient_CI::stop() {
   setStatus(SnSR::CLOSED);
 }
 
-int EthernetClient_CI::connect(IPAddress ip, uint16_t port) {
+int EthernetClient_CI::connect(const char *hostname, IPAddress ip,
+                               uint16_t port) {
   if (sockindex < MAX_SOCK_NUM) {
     if (_sockets[sockindex].status != SnSR::CLOSED) {
       return INVALID_SERVER; // we are already connected!
@@ -102,53 +103,34 @@ int EthernetClient_CI::connect(IPAddress ip, uint16_t port) {
   }
   // Iterate though vector of mock servers
   for (int i = 0; i < mockServers.size(); ++i) {
-    // If we find server with ip and port
-    if ((mockServers.at(i).ip == ip) && (mockServers.at(i).port == port)) {
-      // Save name, ip, and port in peer
-      peer.hostname[0] = '\0';
-      peer.ip = ip;
-      peer.port = port;
+    // If we find server with hostname or ip and port
+    bool flag = hostname ? strncmp(mockServers.at(i).hostname, hostname,
+                                   HOSTNAME_SIZE) == 0
+                         : false;
+    if ((flag || mockServers.at(i).ip == ip) &&
+        (mockServers.at(i).port == port)) {
+      peer = mockServers.at(i);
       setStatus(SnSR::ESTABLISHED);
       _sockets[sockindex].status = SnSR::ESTABLISHED;
       _localPort = 0xC000 + sockindex;
+      if (peer.data) {
+        int i;
+        for (i = 0; peer.data[i] != '\0'; ++i) {
+          pushToReadBuffer(peer.data[i]);
+        }
+      }
       return SUCCESS;
     }
   }
   return INVALID_SERVER;
 }
 
+int EthernetClient_CI::connect(IPAddress ip, uint16_t port) {
+  return connect(nullptr, ip, port);
+}
+
 int EthernetClient_CI::connect(const char *hostname, uint16_t port) {
-  if (sockindex < MAX_SOCK_NUM) {
-    if (_sockets[sockindex].status != SnSR::CLOSED) {
-      return INVALID_SERVER; // we are already connected!
-    }
-  } else {
-    for (int i = 0; i < MAX_SOCK_NUM; ++i) {
-      if (_sockets[i].status == SnSR::CLOSED) {
-        sockindex = i;
-        break;
-      }
-    }
-  }
-  if (sockindex >= MAX_SOCK_NUM) {
-    return INVALID_SERVER; // unable to obtain a socket!
-  }
-  // Iterate though vector of mock servers
-  for (int i = 0; i < mockServers.size(); ++i) {
-    // If we find server with ip and port
-    if ((strncmp(mockServers.at(i).hostname, hostname, HOSTNAME_SIZE) == 0) &&
-        (mockServers.at(i).port == port)) {
-      // Save name, ip, and port in peer
-      strncpy(peer.hostname, hostname, HOSTNAME_SIZE);
-      peer.ip = {0, 0, 0, 0};
-      peer.port = port;
-      setStatus(SnSR::ESTABLISHED);
-      _sockets[sockindex].status = SnSR::ESTABLISHED;
-      _localPort = 0xC000 + sockindex;
-      return SUCCESS;
-    }
-  }
-  return INVALID_SERVER;
+  return connect(hostname, (uint32_t)0, port);
 }
 
 void EthernetClient_CI::setStatus(uint8_t status) {
@@ -157,33 +139,27 @@ void EthernetClient_CI::setStatus(uint8_t status) {
   }
 }
 
-void EthernetClient_CI::startMockServer(IPAddress ip, uint16_t port) {
+void EthernetClient_CI::startMockServer(const char *hostname, IPAddress ip,
+                                        uint16_t port, const uint8_t *data) {
   mockServer server;
-  server.hostname[0] = '\0';
+  if (hostname) {
+    strncpy(server.hostname, hostname, HOSTNAME_SIZE);
+  } else {
+    server.hostname[0] = '\0';
+  }
   server.ip = ip;
   server.port = port;
+  server.data = data;
   mockServers.push_back(server);
 }
 
-void EthernetClient_CI::startMockServer(const char *hostname, uint16_t port) {
-  mockServer server;
-  strncpy(server.hostname, hostname, HOSTNAME_SIZE);
-  server.ip = {0, 0, 0, 0};
-  server.port = port;
-  mockServers.push_back(server);
-}
-
-void EthernetClient_CI::stopMockServer(IPAddress ip, uint16_t port) {
+void EthernetClient_CI::stopMockServer(const char *hostname, IPAddress ip,
+                                       uint16_t port) {
   for (int i = (mockServers.size() - 1); i >= 0; --i) {
-    if (mockServers.at(i).ip == ip && mockServers.at(i).port == port) {
-      mockServers.erase(mockServers.begin() + i);
-    }
-  }
-}
-
-void EthernetClient_CI::stopMockServer(const char *hostname, uint16_t port) {
-  for (int i = (mockServers.size() - 1); i >= 0; --i) {
-    if ((strncmp(mockServers.at(i).hostname, hostname, HOSTNAME_SIZE) == 0) &&
+    bool flag = hostname ? strncmp(mockServers.at(i).hostname, hostname,
+                                   HOSTNAME_SIZE) == 0
+                         : false;
+    if ((flag | mockServers.at(i).ip == ip) &&
         (mockServers.at(i).port == port)) {
       mockServers.erase(mockServers.begin() + i);
     }
