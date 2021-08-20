@@ -16,7 +16,7 @@ EthernetClient_CI::EthernetClient_CI(uint8_t s) : sockindex(s), _timeout(1000) {
     for (int i = 0; i < MAX_SOCK_NUM; ++i) {
       if (_sockets[i].status == SnSR::CLOSED) {
         sockindex = i;
-        _status = SnSR::ESTABLISHED;
+        setStatus(SnSR::ESTABLISHED);
         break;
       }
     }
@@ -81,7 +81,7 @@ void EthernetClient_CI::stop() {
   _localPort = 0;
   peer.ip = (uint32_t)0;
   peer.port = 0;
-  _status = SnSR::CLOSED;
+  setStatus(SnSR::CLOSED);
 }
 
 int EthernetClient_CI::connect(IPAddress ip, uint16_t port) {
@@ -108,7 +108,7 @@ int EthernetClient_CI::connect(IPAddress ip, uint16_t port) {
       peer.hostname[0] = '\0';
       peer.ip = ip;
       peer.port = port;
-      _status = SnSR::ESTABLISHED;
+      setStatus(SnSR::ESTABLISHED);
       _sockets[sockindex].status = SnSR::ESTABLISHED;
       _localPort = 0xC000 + sockindex;
       return SUCCESS;
@@ -142,13 +142,19 @@ int EthernetClient_CI::connect(const char *hostname, uint16_t port) {
       strncpy(peer.hostname, hostname, HOSTNAME_SIZE);
       peer.ip = {0, 0, 0, 0};
       peer.port = port;
-      _status = SnSR::ESTABLISHED;
+      setStatus(SnSR::ESTABLISHED);
       _sockets[sockindex].status = SnSR::ESTABLISHED;
       _localPort = 0xC000 + sockindex;
       return SUCCESS;
     }
   }
   return INVALID_SERVER;
+}
+
+void EthernetClient_CI::setStatus(uint8_t status) {
+  if (sockindex < MAX_SOCK_NUM) {
+    _sockets[sockindex].status = status;
+  }
 }
 
 void EthernetClient_CI::startMockServer(IPAddress ip, uint16_t port) {

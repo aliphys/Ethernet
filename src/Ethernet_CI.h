@@ -99,7 +99,7 @@ public:
   EthernetClient_CI();
   EthernetClient_CI(uint8_t s);
 
-  uint8_t status() { return _status; }
+  uint8_t status() { return sockindex < MAX_SOCK_NUM ? _sockets[sockindex].status : SnSR::CLOSED; };
   virtual int connect(IPAddress ip, uint16_t port);
   virtual int connect(const char *host, uint16_t port);
   virtual int availableForWrite(void) { return 1024 * 1024; } // returns 1mb
@@ -111,7 +111,7 @@ public:
   virtual int peek();
   virtual void flush() {}
   virtual void stop();
-  virtual uint8_t connected() { return _status == SnSR::ESTABLISHED; }
+  virtual uint8_t connected() { return status() == SnSR::ESTABLISHED; }
   virtual operator bool() { return connected(); }
   virtual bool operator==(const bool value) { return bool() == value; }
   virtual bool operator!=(const bool value) { return bool() != value; }
@@ -138,18 +138,17 @@ public:
   virtual mockServer serverPeer() { return peer; }
   void pushToReadBuffer(uint8_t value);
   std::deque<uint8_t>* writeBuffer();
-  void setStatus(uint8_t status) { _status = status; }
+  void setStatus(uint8_t status);
   uint8_t getSockindex() const { return sockindex; }
 
 private:
   uint8_t sockindex; // MAX_SOCK_NUM means client not in use
   uint16_t _timeout;
   uint16_t _localPort = 0;
-  uint8_t _status = SnSR::CLOSED;
 
   static std::vector<mockServer> mockServers;
-  mockServer peer;
   static socket_t _sockets[MAX_SOCK_NUM];
+  mockServer peer;
 };
 
 class EthernetServer_CI : public EthernetServer_Base {
