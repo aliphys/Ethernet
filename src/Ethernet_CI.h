@@ -100,13 +100,17 @@ public:
   EthernetClient_CI();
   EthernetClient_CI(uint8_t s);
 
-  uint8_t status() { return sockindex < MAX_SOCK_NUM ? _sockets[sockindex].status : SnSR::CLOSED; };
+  uint8_t status() {
+    return sockindex < MAX_SOCK_NUM ? _sockets[sockindex].status : SnSR::CLOSED;
+  };
   virtual int connect(IPAddress ip, uint16_t port);
   virtual int connect(const char *host, uint16_t port);
   virtual int availableForWrite(void) { return 1024 * 1024; } // returns 1mb
   virtual size_t write(uint8_t);
   virtual size_t write(const uint8_t *buf, size_t size);
-  virtual int available() { return sockindex < MAX_SOCK_NUM ? _sockets[sockindex].readBuffer.size() : 0; };
+  virtual int available() {
+    return sockindex < MAX_SOCK_NUM ? _sockets[sockindex].readBuffer.size() : 0;
+  };
   virtual int read();
   virtual int read(uint8_t *buf, size_t size);
   virtual int peek();
@@ -132,12 +136,13 @@ public:
 
   // Testing Support
   virtual int connect(const char *host, IPAddress ip, uint16_t port);
-  static void startMockServer(const char *host, IPAddress ip, uint16_t port, const uint8_t *data = nullptr);
+  static void startMockServer(const char *host, IPAddress ip, uint16_t port,
+                              const uint8_t *data = nullptr);
   static void stopMockServer(const char *host, IPAddress ip, uint16_t port);
   static void clearMockServers() { mockServers.clear(); }
   virtual mockServer serverPeer() { return peer; }
   void pushToReadBuffer(uint8_t value);
-  std::deque<uint8_t>* writeBuffer();
+  std::deque<uint8_t> *writeBuffer();
   void setStatus(uint8_t status);
   uint8_t getSockindex() const { return sockindex; }
 
