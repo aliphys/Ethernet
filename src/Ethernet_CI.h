@@ -136,8 +136,8 @@ public:
   static void stopMockServer(const char *host, uint16_t port);
   virtual std::vector<mockServer> testServers() { return mockServers; }
   virtual mockServer serverPeer() { return peer; }
-  void pushToReadBuffer(uint8_t value) { sockindex < MAX_SOCK_NUM ? _sockets[sockindex].readBuffer.push_back(value) : (void) 0; }
-  std::deque<uint8_t>* writeBuffer() { return sockindex < MAX_SOCK_NUM ? &_sockets[sockindex].writeBuffer : nullptr; }
+  void pushToReadBuffer(uint8_t value);
+  std::deque<uint8_t>* writeBuffer();
   void setStatus(uint8_t status) { _status = status; }
   uint8_t getSockindex() const { return sockindex; }
 

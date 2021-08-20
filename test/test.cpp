@@ -110,7 +110,13 @@ unittest(Client_Write) {
   Ethernet.begin(mac, ip);
   EthernetClient client;
   EthernetClient::startMockServer(serverIP, 80);
+  assertEqual(MAX_SOCK_NUM, client.getSockindex());
   int result = client.connect(serverIP, 80);
+  assertEqual(1, result);
+  assertEqual(0, client.getSockindex());
+  assertNotNull(client.writeBuffer());
+  std::deque<uint8_t> buffer = *(client.writeBuffer());
+  assertEqual(0, buffer.size());
   assertEqual(0, client.writeBuffer()->size());
   client.write((const uint8_t *)"Hello", 5);
   assertEqual(5, client.writeBuffer()->size());
@@ -140,10 +146,7 @@ unittest(Client_Stop) {
   client.stop();
 
   assertEqual(-1, client.read());
-  assertNull(client.writeBuffer());
-
   assertEqual(0, client.localPort());
-
   assertEqual(0, client.serverPeer().ip);
   assertEqual(0, client.serverPeer().port);
 }
