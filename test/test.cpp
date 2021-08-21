@@ -210,6 +210,8 @@ unittest(Client_Server) {
   assertTrue(client1);
   client2 = ethernet_server.getClient();
   assertTrue(client1 == (const EthernetClient) client2);
+  client1 = ethernet_server.accept();
+  assertFalse(client1);
 }
 
 unittest_main()

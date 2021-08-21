@@ -114,10 +114,7 @@ int EthernetClient_CI::connect(const char *hostname, IPAddress ip,
       _sockets[sockindex].status = SnSR::ESTABLISHED;
       _localPort = 0xC000 + sockindex;
       if (peer.data) {
-        int i;
-        for (i = 0; peer.data[i] != '\0'; ++i) {
-          pushToReadBuffer(peer.data[i]);
-        }
+        pushToReadBuffer((const char *)peer.data);
       }
       return SUCCESS;
     }
@@ -169,6 +166,14 @@ void EthernetClient_CI::stopMockServer(const char *hostname, IPAddress ip,
 void EthernetClient_CI::pushToReadBuffer(uint8_t value) {
   if (sockindex < MAX_SOCK_NUM) {
     _sockets[sockindex].readBuffer.push_back(value);
+  }
+}
+
+void EthernetClient_CI::pushToReadBuffer(const char *value) {
+  if (sockindex < MAX_SOCK_NUM) {
+    for (int i = 0; value[i]; ++i) {
+      _sockets[sockindex].readBuffer.push_back(value[i]);
+    }
   }
 }
 

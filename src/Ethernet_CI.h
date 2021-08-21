@@ -142,6 +142,7 @@ public:
   static void clearMockServers() { mockServers.clear(); }
   virtual mockServer serverPeer() { return peer; }
   void pushToReadBuffer(uint8_t value);
+  void pushToReadBuffer(const char *value);
   std::deque<uint8_t> *writeBuffer();
   void setStatus(uint8_t status);
   uint8_t getSockindex() const { return sockindex; }

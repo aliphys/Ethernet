@@ -29,6 +29,7 @@ EthernetClient_CI EthernetServer_CI::accept()
 {
 	if (hasClientCalling) {
 		client = EthernetClient_CI(MAX_SOCK_NUM);  // signal to select your own sockindex and "connect"
+		hasClientCalling = false;
 	} else {
 		client = EthernetClient_CI();
 	}
