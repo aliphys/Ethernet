@@ -19,8 +19,9 @@ byte serverIP[] = {192, 168, 1, 1};
 const char *serverName = "www.google.com";
 
 unittest_teardown() {
-  EthernetClient::stopMockServer(serverIP, 80);
-  EthernetClient::stopMockServer(serverName, 80);
+  EthernetClient::stopMockServer(nullptr, serverIP, 80);
+  EthernetClient::stopMockServer(serverName, (uint32_t) 0, 80);
+  EthernetClient::clearMockServers();
 }
 
 unittest(Ethernet_begin_pins) {
@@ -87,7 +88,7 @@ unittest(Client_Connect_IP) {
   assertEqual(INVALID_SERVER, result);
   client.stop();
 
-  EthernetClient::startMockServer(serverIP, 80);
+  EthernetClient::startMockServer(nullptr, serverIP, 80);
   result = client.connect(serverIP, 80);
   assertEqual(SUCCESS, result);
   client.stop();
@@ -100,7 +101,7 @@ unittest(Client_Connect_Name) {
   assertEqual(INVALID_SERVER, result);
   client.stop();
 
-  EthernetClient::startMockServer(serverName, 80);
+  EthernetClient::startMockServer(serverName, (uint32_t) 0, 80);
   result = client.connect(serverName, 80);
   assertEqual(SUCCESS, result);
   client.stop();
@@ -109,18 +110,25 @@ unittest(Client_Connect_Name) {
 unittest(Client_Write) {
   Ethernet.begin(mac, ip);
   EthernetClient client;
-  EthernetClient::startMockServer(serverIP, 80);
+  EthernetClient::startMockServer(nullptr, serverIP, 80);
+  assertEqual(MAX_SOCK_NUM, client.getSockindex());
   int result = client.connect(serverIP, 80);
-  assertEqual(0, client.writeBuffer().size());
+  assertEqual(1, result);
+  assertEqual(0, client.getSockindex());
+  assertNotNull(client.writeBuffer());
+  std::deque<uint8_t> buffer = *(client.writeBuffer());
+  assertEqual(0, buffer.size());
+  assertEqual(0, client.writeBuffer()->size());
   client.write((const uint8_t *)"Hello", 5);
-  assertEqual(5, client.writeBuffer().size());
-  assertEqual('H', client.writeBuffer().at(0));
+  assertEqual(5, client.writeBuffer()->size());
+  assertEqual('H', client.writeBuffer()->at(0));
+  client.stop();
 }
 
-unittest(Client_Read) {
+unittest(Client_Read_data_given_after_connection) {
   Ethernet.begin(mac, ip);
   EthernetClient client;
-  EthernetClient::startMockServer(serverIP, 80);
+  EthernetClient::startMockServer(nullptr, serverIP, 80);
   int result = client.connect(serverIP, 80);
   assertEqual(SUCCESS, result);
   assertEqual(-1, client.read());
@@ -128,20 +136,30 @@ unittest(Client_Read) {
   assertEqual(1, client.available());
   assertEqual('A', client.read());
   assertEqual(0, client.available());
+  client.stop();
+}
+
+unittest(Client_Read_data_given_before_connection) {
+  Ethernet.begin(mac, ip);
+  EthernetClient client;
+  EthernetClient::startMockServer(nullptr, serverIP, 80, (const uint8_t *) "ABC");
+  int result = client.connect(serverIP, 80);
+  assertEqual(SUCCESS, result);
+  assertEqual(3, client.available());
+  assertEqual('A', client.read());
+  assertEqual(2, client.available());
+  client.stop();
 }
 
 unittest(Client_Stop) {
   Ethernet.begin(mac, ip);
   EthernetClient client;
-  EthernetClient::startMockServer(serverIP, 80);
+  EthernetClient::startMockServer(nullptr, serverIP, 80);
   int result = client.connect(serverIP, 80);
   client.stop();
 
   assertEqual(-1, client.read());
-  assertEqual(0, client.writeBuffer().size());
-
   assertEqual(0, client.localPort());
-
   assertEqual(0, client.serverPeer().ip);
   assertEqual(0, client.serverPeer().port);
 }
@@ -149,7 +167,7 @@ unittest(Client_Stop) {
 unittest(Client_AvailableForWrite) {
   Ethernet.begin(mac, ip);
   EthernetClient client;
-  EthernetClient::startMockServer(serverIP, 80);
+  EthernetClient::startMockServer(nullptr, serverIP, 80);
   int result = client.connect(serverIP, 80);
   assertNotEqual(1024 * 1023, client.availableForWrite());
   assertEqual(1024 * 1024, client.availableForWrite());
@@ -158,7 +176,7 @@ unittest(Client_AvailableForWrite) {
 unittest(Client_Peek) {
   Ethernet.begin(mac, ip);
   EthernetClient client;
-  EthernetClient::startMockServer(serverIP, 80);
+  EthernetClient::startMockServer(nullptr, serverIP, 80);
   int result = client.connect(serverIP, 80);
   assertEqual(SUCCESS, result);
 
@@ -173,9 +191,27 @@ unittest(Client_Connected) {
   EthernetClient client;
   assertFalse(client.connected());
 
-  EthernetClient::startMockServer(serverIP, 80);
+  EthernetClient::startMockServer(nullptr, serverIP, 80);
   int result = client.connect(serverIP, 80);
   assertTrue(client.connected());
+}
+
+unittest(Client_Server) {
+  EthernetServer ethernet_server(80);
+  EthernetClient_CI client1, client2;
+  client1 = ethernet_server.accept();
+  assertFalse(client1);
+
+  EthernetServer* pServer = EthernetServer::getServerForPort(80);
+  assertNotNull(pServer);
+  assertEqual(&ethernet_server, pServer);
+  pServer->setHasClientCalling(true);
+  client1 = ethernet_server.accept();
+  assertTrue(client1);
+  client2 = ethernet_server.getClient();
+  assertTrue(client1 == (const EthernetClient) client2);
+  client1 = ethernet_server.accept();
+  assertFalse(client1);
 }
 
 unittest_main()
