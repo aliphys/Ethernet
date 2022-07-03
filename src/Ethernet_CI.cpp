@@ -22,7 +22,7 @@ EthernetHardwareStatus Ethernet_CI::hardwareStatus() {
   return Ethernet_Base::hardwareStatus();
 }
 
-// Manaul configuration
+// Manual configuration
 void Ethernet_CI::begin(uint8_t *mac, IPAddress ip) {
   return Ethernet_Base::begin(mac, ip);
 }
